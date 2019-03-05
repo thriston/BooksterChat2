@@ -2,26 +2,34 @@ package com.example.booksterchat;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Contacts;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.DateFormat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Date;
 
 public class ProfilePage extends AppCompatActivity {
 
-    String receiverUID = "UJ6Oeescpxc9nkvvNBMdwqinAFI3"; 
+    String receiverUID = "UJ6Oeescpxc9nkvvNBMdwqinAFI3";
     String name = "John Doe";
     String email = "john.doe@gmail.com";
     Button messageBtn;
@@ -37,8 +45,9 @@ public class ProfilePage extends AppCompatActivity {
             AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
+                    FirebaseAuth.getInstance().signOut();
                     Snackbar.make(profile_activity, "You have been signed out. ", Snackbar.LENGTH_SHORT).show();
-                    finish();
+                    //finish();
                 }
             });
         }
@@ -58,7 +67,14 @@ public class ProfilePage extends AppCompatActivity {
         {
             if(resultCode == RESULT_OK)
             {
+
+
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if(user.getMetadata().getCreationTimestamp() == user.getMetadata().getLastSignInTimestamp())
+                {
+                    createProfile(user);
+                }
+
                 //createProfile(user);
                 Snackbar.make(profile_activity, "Successfully signed in. Welcome! ", Snackbar.LENGTH_SHORT).show();
             }
@@ -85,7 +101,6 @@ public class ProfilePage extends AppCompatActivity {
         tvEmail.setText(email);
         tvUID.setText(receiverUID);
 
-        //Check if not sign-in then navigate to signin page
         if(FirebaseAuth.getInstance().getCurrentUser() == null)
         {
             startActivityForResult(AuthUI.getInstance()
@@ -95,8 +110,9 @@ public class ProfilePage extends AppCompatActivity {
         else
         {
             Snackbar.make(profile_activity, "Welcome "+FirebaseAuth.getInstance().getCurrentUser().getEmail(), Snackbar.LENGTH_SHORT).show();
-            //displayChatMessage();
         }
+
+
 
         messageBtn = findViewById(R.id.messageBtn);
         messageBtn.setOnClickListener(new View.OnClickListener() {
@@ -108,5 +124,18 @@ public class ProfilePage extends AppCompatActivity {
                 startActivity(myintent);
             }
         });
+    }
+
+
+    public void createProfile(FirebaseUser user)
+    {
+        String fullName, email, UID;
+        fullName = user.getDisplayName();
+        email = user.getEmail();
+        UID = user.getUid();
+        UserProfile userProfile = new UserProfile(fullName, email, UID);
+
+        FirebaseDatabase.getInstance().getReference().child("User").child(UID).setValue(userProfile);
+
     }
 }

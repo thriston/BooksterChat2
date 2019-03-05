@@ -54,15 +54,11 @@ public class MainActivity extends AppCompatActivity {
                     chatIDs.add(ds.getKey());
                 }
 
-
-
                 String v1, v2, myUID;
                 myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 v1 = receiverUID+"_"+myUID;
                 v2 = myUID+"_"+receiverUID;
 
-                //.out.println("CHAT: "+chatModelList.size());
-                //System.out.println("CHAT TRUE: "+chatIDs.contains(v1));
 
                 if(chatIDs.contains(v1) || chatIDs.contains(v2))
                 {
@@ -125,9 +121,6 @@ public class MainActivity extends AppCompatActivity {
                     key = v1;
                 }
 
-
-
-
             }
 
             @Override
@@ -139,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendMessage(View view)
     {
-        //String key = conversationExists(receiverUID);
         EditText editText = findViewById(R.id.editText);
         ChatMessage chatMessage = new ChatMessage(
                 editText.getText().toString(),
@@ -151,51 +143,4 @@ public class MainActivity extends AppCompatActivity {
         editText.setText("");
     }
 
-//    public String conversationExists(final String receiverUID)
-//    {
-//        String myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-//        myDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                System.out.println("IN HERE");
-//                String rUID= receiverUID;
-//                String myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-//                if(dataSnapshot.hasChild(rUID+"_"+myUID))
-//                {
-//                    globalKey = rUID+"_"+myUID;
-//                    System.out.println("GLOBAL1:"+globalKey);
-//                }
-//                if(dataSnapshot.hasChild(myUID+"_"+rUID))
-//                {
-//                    globalKey = myUID+"_"+rUID;
-//                    System.out.println("GLOBAL2:"+globalKey);
-//                }
-//            }
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//            }
-//        });
-//
-//
-//        if(globalKey!=null)
-//        {
-//            System.out.println("CONVERSATION EXIST");
-//            return globalKey;
-//        }
-//
-//        System.out.println("CONVERSATION DOESN'T EXIST ");
-//        return receiverUID+"_"+myUID;
-//    }
-
-//    public void createProfile(FirebaseUser user)
-//    {
-//        String fullName, email, UID;
-//        fullName = user.getDisplayName();
-//        email = user.getEmail();
-//        UID = user.getUid();
-//        FirebaseDatabase.getInstance().getReference("Profiles").push().setValue(
-//                new UserProfile(fullName, email, UID)
-//        );
-//    }
 }
