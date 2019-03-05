@@ -1,161 +1,201 @@
 package com.example.booksterchat;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.format.DateFormat;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
-import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.database.FirebaseListAdapter;
-import com.firebase.ui.database.FirebaseListOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private DatabaseReference myDatabase;
-    private static int SIGN_IN_REQUEST_CODE =1;
+
     private FirebaseListAdapter<ChatMessage> adapter;
+    private String receiverUID;
+    private String globalKey = null;
+    private String key;
 
-    RelativeLayout activity_main;
-
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.menu_sign_out)
-        {
-            AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    Snackbar.make(activity_main, "You have been signed out. ", Snackbar.LENGTH_SHORT).show();
-                    finish();
-                }
-            });
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == SIGN_IN_REQUEST_CODE)
-        {
-            if(resultCode == RESULT_OK)
-            {
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                //createProfile(user);
-                Snackbar.make(activity_main, "Successfully signed in. Welcome! ", Snackbar.LENGTH_SHORT).show();
-                //displayChatMessage();
-            }
-            else
-            {
-                Snackbar.make(activity_main, "Sorry, we couldn't sign you in. Please try again later. ", Snackbar.LENGTH_SHORT).show();
-                finish();
-            }
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        activity_main = (RelativeLayout)findViewById(R.id.activity_main);
+
+        Intent intent = getIntent();
+        receiverUID = intent.getStringExtra("receiverUID");
+
+        myDatabase = FirebaseDatabase.getInstance().getReference().child("Chats");
 
 
-        //Check if not sign-in then navigate to signin page
-        if(FirebaseAuth.getInstance().getCurrentUser() == null)
-        {
-            startActivityForResult(AuthUI.getInstance()
-                    .createSignInIntentBuilder()
-                    .build(), SIGN_IN_REQUEST_CODE);
-        }
-        else
-        {
-            Snackbar.make(activity_main, "Welcome "+FirebaseAuth.getInstance().getCurrentUser().getEmail(), Snackbar.LENGTH_SHORT).show();
-            //displayChatMessage();
-        }
-
-
-
-
-
-        myDatabase = FirebaseDatabase.getInstance().getReference("Chats");
-
-        //final TextView textView = findViewById(R.id.textView);
-        final ListView mListView = findViewById(R.id.listView);
         myDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //textView.setText(dataSnapshot.getValue().toString());
 
-                ArrayList<ChatMessage> chatModelList = new ArrayList<>();
-
+                ListView mListView = findViewById(R.id.listView);
+                ArrayList<String> chatIDs = new ArrayList<>();
                 for(DataSnapshot ds : dataSnapshot.getChildren())
                 {
                     ChatMessage chatMessage = ds.getValue(ChatMessage.class);
-                    chatModelList.add(chatMessage);
+                    chatIDs.add(ds.getKey());
                 }
 
-                ChatMessageListAdapter adapter = new ChatMessageListAdapter(MainActivity.this, R.layout.adapter_view_layout, chatModelList);
-                mListView.setAdapter(adapter);
+
+
+                String v1, v2, myUID;
+                myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                v1 = receiverUID+"_"+myUID;
+                v2 = myUID+"_"+receiverUID;
+
+                //.out.println("CHAT: "+chatModelList.size());
+                //System.out.println("CHAT TRUE: "+chatIDs.contains(v1));
+
+                if(chatIDs.contains(v1) || chatIDs.contains(v2))
+                {
+                    if(chatIDs.contains(v1))
+                    {
+                        myDatabase.child(v1).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                ListView mListView = findViewById(R.id.listView);
+                                ArrayList<ChatMessage> chatModelList = new ArrayList<>();
+                                for(DataSnapshot ds : dataSnapshot.getChildren())
+                                {
+                                    ChatMessage chatMessage = ds.getValue(ChatMessage.class);
+                                    chatModelList.add(chatMessage);
+                                }
+
+                                ChatMessageListAdapter adapter = new ChatMessageListAdapter(MainActivity.this, R.layout.adapter_view_layout, chatModelList);
+                                mListView.setAdapter(adapter);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        key = v1;
+                    }
+
+
+                    if(chatIDs.contains(v2))
+                    {
+                        myDatabase.child(v2).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                ListView mListView = findViewById(R.id.listView);
+                                ArrayList<ChatMessage> chatModelList = new ArrayList<>();
+                                for(DataSnapshot ds : dataSnapshot.getChildren())
+                                {
+                                    ChatMessage chatMessage = ds.getValue(ChatMessage.class);
+                                    chatModelList.add(chatMessage);
+                                }
+                                ChatMessageListAdapter adapter = new ChatMessageListAdapter(MainActivity.this, R.layout.adapter_view_layout, chatModelList);
+                                mListView.setAdapter(adapter);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        key = v2;
+                    }
+
+                }
+
+                if(!chatIDs.contains(v1) && !chatIDs.contains(v2))
+                {
+                    key = v1;
+                }
+
+
+
+
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                //textView.setText("CANCELLED");
             }
         });
+
     }
 
     public void sendMessage(View view)
     {
+        //String key = conversationExists(receiverUID);
         EditText editText = findViewById(R.id.editText);
-        myDatabase.push().setValue(new ChatMessage(
+        ChatMessage chatMessage = new ChatMessage(
                 editText.getText().toString(),
                 FirebaseAuth.getInstance().getCurrentUser().getEmail(),
                 FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),
                 new Date().getTime()
-                ));
+        );
+        myDatabase.child(key).push().setValue(chatMessage);
         editText.setText("");
     }
+
+//    public String conversationExists(final String receiverUID)
+//    {
+//        String myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+//        myDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                System.out.println("IN HERE");
+//                String rUID= receiverUID;
+//                String myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+//                if(dataSnapshot.hasChild(rUID+"_"+myUID))
+//                {
+//                    globalKey = rUID+"_"+myUID;
+//                    System.out.println("GLOBAL1:"+globalKey);
+//                }
+//                if(dataSnapshot.hasChild(myUID+"_"+rUID))
+//                {
+//                    globalKey = myUID+"_"+rUID;
+//                    System.out.println("GLOBAL2:"+globalKey);
+//                }
+//            }
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//            }
+//        });
+//
+//
+//        if(globalKey!=null)
+//        {
+//            System.out.println("CONVERSATION EXIST");
+//            return globalKey;
+//        }
+//
+//        System.out.println("CONVERSATION DOESN'T EXIST ");
+//        return receiverUID+"_"+myUID;
+//    }
+
+//    public void createProfile(FirebaseUser user)
+//    {
+//        String fullName, email, UID;
+//        fullName = user.getDisplayName();
+//        email = user.getEmail();
+//        UID = user.getUid();
+//        FirebaseDatabase.getInstance().getReference("Profiles").push().setValue(
+//                new UserProfile(fullName, email, UID)
+//        );
+//    }
 }

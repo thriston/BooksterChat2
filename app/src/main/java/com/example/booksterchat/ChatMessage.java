@@ -1,5 +1,7 @@
 package com.example.booksterchat;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.Date;
 
 public class ChatMessage {
@@ -7,12 +9,14 @@ public class ChatMessage {
     private String messageUser;
     private long messageTime;
     private String userName;
+    private String senderUID;
 
     public ChatMessage(String messageText, String messageUser, String userName, long messageTime) {
         this.messageText = messageText;
         this.messageUser = messageUser;
         this.userName = userName;
         this.messageTime = new Date().getTime();
+        this.senderUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
     public ChatMessage() {
@@ -48,5 +52,13 @@ public class ChatMessage {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getSenderUID() {
+        return senderUID;
+    }
+
+    public void setSenderUID(String senderUID) {
+        this.senderUID = senderUID;
     }
 }
