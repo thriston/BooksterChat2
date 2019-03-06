@@ -9,6 +9,7 @@ public class UserProfile {
     private String email;
     private String age;
     private String UID;
+    private String phone;
     private ArrayList<String> products;
     private String phoneNumber;
     private int studentID;

@@ -29,8 +29,8 @@ import java.util.Date;
 
 public class ProfilePage extends AppCompatActivity {
 
-    String receiverUID = "UJ6Oeescpxc9nkvvNBMdwqinAFI3";
-    String name = "John Doe";
+    String receiverUID = "0cfV15r2f0MQj13KBMObJOiMo1r2";
+    String name = "Another One";
     String email = "john.doe@gmail.com";
     Button messageBtn;
     TextView tvName, tvEmail, tvUID;
@@ -119,6 +119,7 @@ public class ProfilePage extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //for chat activity
+                //Intent myintent = new Intent(ProfilePage.this, MainActivity.class);
                 Intent myintent = new Intent(ProfilePage.this, MainActivity.class);
                 myintent.putExtra("receiverUID", receiverUID);
                 startActivity(myintent);
@@ -135,7 +136,7 @@ public class ProfilePage extends AppCompatActivity {
         UID = user.getUid();
         UserProfile userProfile = new UserProfile(fullName, email, UID);
 
-        FirebaseDatabase.getInstance().getReference().child("User").child(UID).setValue(userProfile);
+        FirebaseDatabase.getInstance().getReference().child("Users").child(UID).setValue(userProfile);
 
     }
 }

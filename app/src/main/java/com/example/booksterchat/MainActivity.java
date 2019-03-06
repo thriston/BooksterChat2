@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -19,6 +20,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private String receiverUID;
     private String globalKey = null;
     private String key;
+    private String myUID;
 
 
     @Override
@@ -38,9 +41,12 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         receiverUID = intent.getStringExtra("receiverUID");
+        myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         myDatabase = FirebaseDatabase.getInstance().getReference().child("Chats");
 
+
+        //System.out.println("USER PROFILE: "+value);
 
         myDatabase.addValueEventListener(new ValueEventListener() {
             @Override
@@ -54,10 +60,11 @@ public class MainActivity extends AppCompatActivity {
                     chatIDs.add(ds.getKey());
                 }
 
-                String v1, v2, myUID;
+                final String v1, v2, myUID;
                 myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 v1 = receiverUID+"_"+myUID;
                 v2 = myUID+"_"+receiverUID;
+
 
 
                 if(chatIDs.contains(v1) || chatIDs.contains(v2))
@@ -89,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
 
+
                     if(chatIDs.contains(v2))
                     {
                         myDatabase.child(v2).addValueEventListener(new ValueEventListener() {
@@ -116,9 +124,14 @@ public class MainActivity extends AppCompatActivity {
 
                 }
 
+                //new conversation
                 if(!chatIDs.contains(v1) && !chatIDs.contains(v2))
                 {
                     key = v1;
+                    //mDatabase.child("users").child(userId).setValue(user);
+
+                    System.out.println("NEW CONVERSATION"); //FirebaseDatabase.getInstance().getReference().child("Users").child(myUID).child("Conversations").child(key);
+
                 }
 
             }
@@ -128,10 +141,50 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
+
+
+
+//        String value;
+//        DatabaseReference myDatabase2 = FirebaseDatabase.getInstance().getReference().child("Users").child(myUID).child("Conversations");
+//
+//
+//        myDatabase2.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                final String v1, v2, myUID;
+//                myUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+//                v1 = receiverUID+"_"+myUID;
+//                v2 = myUID+"_"+receiverUID;
+//
+//
+//                ArrayList<Conversation> conversationsModel= new ArrayList<>();
+//                for(DataSnapshot ds : dataSnapshot.getChildren())
+//                {
+//                    Conversation conversation = new Conversation(ds.getKey(),(Long) ds.getValue());
+//                    conversation.setMyUID(myUID);
+//                    conversationsModel.add(conversation);
+//                }
+//                //System.out.println("CONVERSATIONS: "+conversationsModel.get(0).getLastActivityTime());
+//                //System.out.println("TIMES: "+lastActivityTimes);
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//            }
+//        });
+
     }
 
     public void sendMessage(View view)
     {
+        //saves last message time
+        Date date = new Date();
+        FirebaseDatabase.getInstance().getReference().child("Users").child(myUID).child("Conversations").child(key).setValue(date.getTime());
+        FirebaseDatabase.getInstance().getReference().child("Users").child(receiverUID).child("Conversations").child(key).setValue(date.getTime());
         EditText editText = findViewById(R.id.editText);
         ChatMessage chatMessage = new ChatMessage(
                 editText.getText().toString(),
